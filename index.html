@@ -19,10 +19,21 @@
     label { display: block; margin-top: 10px; font-weight: bold; }
     input { width: 100%; padding: 8px; margin-top: 5px;
       border: 1px solid #ccc; border-radius: 8px; font-size: 14px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-    th, td { border: 1px solid #0b437a; padding: 10px; text-align: center; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      border: 2px solid #0b437a;
+    }
+    th, td {
+      border: 1px solid #0b437a;
+      padding: 10px;
+      text-align: center;
+    }
     th { background: #2c3e50; color: white; }
     td { background: #fafafa; }
+
     .btn { margin-top: 15px; padding: 10px 20px;
       border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: bold;
       transition: 0.3s; }
@@ -102,10 +113,8 @@
       const { jsPDF } = window.jspdf;
       let doc = new jsPDF("p", "mm", "a4");
 
-      // Logo en PDF
       if (logoBase64) doc.addImage(logoBase64, "PNG", 160, 10, 30, 25);
 
-      // Encabezado
       doc.setFontSize(15);
       doc.text("MULTISERVICIOS SG", 105, 20, { align: "center" });
       doc.setFontSize(10);
@@ -113,7 +122,6 @@
       doc.text("Adaptados a las necesidades de cada cliente con garantía y responsabilidad.", 105, 34, { align: "center" });
       doc.line(20, 38, 190, 38);
 
-      // Datos cliente
       let cliente = document.getElementById("cliente").value;
       let fecha = document.getElementById("fecha").value;
       let numCotizacion = document.getElementById("numCotizacion").value;
@@ -123,7 +131,6 @@
       doc.text(`Fecha: ${fecha}`, 20, 58);
       doc.text(`N° Cotización: ${numCotizacion}`, 140, 50);
 
-      // Productos
       let tabla = document.getElementById("tabla-productos");
       let filas = tabla.rows;
       let productos = [];
@@ -138,9 +145,6 @@
         productos.push([cantidad, desc, precio, total]);
       }
 
-      productos.push([{ content: 'Sub-Total', colSpan: 3, styles: { halign: 'right' } }, sumaTotal.toFixed(2)]);
-      productos.push([{ content: 'Total', colSpan: 3, styles: { halign: 'right' } }, sumaTotal.toFixed(2)]);
-
       doc.autoTable({
         head: [['Cantidad', 'Descripción', 'Precio Unitario (B/.)', 'Total (B/.)']],
         body: productos,
@@ -150,9 +154,22 @@
         theme: 'grid'
       });
 
-      // Pie de página con datos de Efraín Guerra
       let pageHeight = doc.internal.pageSize.height;
-      let pieY = pageHeight - 60;
+      let startY = pageHeight - 80;
+      let totales = [
+        [{ content: 'Sub-Total', colSpan: 3, styles: { halign: 'right' } }, sumaTotal.toFixed(2)],
+        [{ content: 'Total', colSpan: 3, styles: { halign: 'right' } }, sumaTotal.toFixed(2)]
+      ];
+
+      doc.autoTable({
+        head: [],
+        body: totales,
+        startY: startY,
+        theme: 'grid',
+        styles: { halign: 'center', valign: 'middle', lineWidth: 0.3, lineColor: [0,0,0] }
+      });
+
+      let pieY = pageHeight - 55;
       doc.setFontSize(11);
       doc.text("Método de Pago:", 20, pieY);
       pieY += 6;
@@ -167,10 +184,9 @@
       doc.setFontSize(10);
       doc.text("Gracias por preferirnos. Valoramos su confianza en nuestros servicios.", 105, pieY, { align: "center" });
 
-      pieY = pageHeight - 22;
+      pieY += 6;
       doc.text("Tel: (507) 6748-8227 | Email: efraineguerra@gmail.com", 105, pieY, { align: "center" });
 
-      // Descargar PDF
       if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
         let pdfBlobUrl = doc.output("bloburl");
         window.open(pdfBlobUrl, "_blank");
@@ -181,5 +197,3 @@
   </script>
 </body>
 </html>
-
-
