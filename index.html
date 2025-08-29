@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Generador de Cotización (PDF con Logo a la Derecha)</title>
+  <title>Generador de Cotización - Construcción</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
   <style>
@@ -17,25 +17,15 @@
       box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
     }
     label { display: block; margin-top: 10px; font-weight: bold; }
-    input {
-      width: 100%; padding: 8px; margin-top: 5px;
-      border: 1px solid #ccc; border-radius: 8px; font-size: 14px;
-    }
-    table {
-      width: 100%; border-collapse: collapse; margin-top: 15px;
-    }
-    th, td {
-      border: 1px solid #0b437a;
-      padding: 10px; text-align: center;
-    }
+    input { width: 100%; padding: 8px; margin-top: 5px;
+      border: 1px solid #ccc; border-radius: 8px; font-size: 14px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { border: 1px solid #0b437a; padding: 10px; text-align: center; }
     th { background: #2c3e50; color: white; }
     td { background: #fafafa; }
-    .btn {
-      margin-top: 15px; padding: 10px 20px;
-      border: none; border-radius: 8px;
-      cursor: pointer; font-size: 14px; font-weight: bold;
-      transition: 0.3s;
-    }
+    .btn { margin-top: 15px; padding: 10px 20px;
+      border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: bold;
+      transition: 0.3s; }
     .btn-add { background: #27ae60; color: white; }
     .btn-add:hover { background: #219150; }
     .btn-download { background: #2980b9; color: white; float: right; }
@@ -43,11 +33,11 @@
     .btn-delete { background: #e74c3c; color: white; border: none;
       border-radius: 6px; padding: 5px 8px; cursor: pointer; }
     .btn-delete:hover { background: #c0392b; }
-    #logoPreview { margin-top: 10px; max-width: 150px; display: none; }
+    #logoPreview { margin: 10px auto; display: block; max-width: 150px; max-height: 80px; }
   </style>
 </head>
 <body>
-  <h2>Generador de Cotización</h2>
+  <h2>Generador de Cotización - Construcción</h2>
   <div class="formulario">
     <label>Cliente: <input type="text" id="cliente"></label>
     <label>Fecha: <input type="date" id="fecha"></label>
@@ -71,29 +61,18 @@
   </div>
 
   <script>
-    // 🔒 Validación: solo ejecutarse en un navegador
-    if (typeof window === "undefined" || typeof document === "undefined") {
-      alert("Este programa solo puede ejecutarse en un navegador web.");
-      throw new Error("No es un navegador");
-    }
-
-    if (!window.FileReader || !window.navigator) {
-      alert("Tu navegador no es compatible. Usa Google Chrome, Edge, Firefox o Safari.");
-      throw new Error("Navegador no compatible");
-    }
-
     let logoBase64 = null;
 
     document.getElementById("logo").addEventListener("change", function() {
       const file = this.files[0];
-      if (file) {
+      if(file) {
         const reader = new FileReader();
         reader.onload = function(e) {
           logoBase64 = e.target.result;
           const preview = document.getElementById("logoPreview");
           preview.src = logoBase64;
           preview.style.display = "block";
-        };
+        }
         reader.readAsDataURL(file);
       }
     });
@@ -101,51 +80,40 @@
     function agregarFila() {
       let tabla = document.getElementById("tabla-productos");
       let fila = tabla.insertRow(-1);
-
-      let celdaCantidad = fila.insertCell(0);
-      let celdaDesc = fila.insertCell(1);
-      let celdaPrecio = fila.insertCell(2);
-      let celdaTotal = fila.insertCell(3);
-      let celdaAccion = fila.insertCell(4);
-
-      celdaCantidad.innerHTML = `<input type="number" value="1" min="1" onchange="calcularTotal(this)">`;
-      celdaDesc.innerHTML = `<input type="text" placeholder="Descripción">`;
-      celdaPrecio.innerHTML = `<input type="number" value="0" step="0.01" onchange="calcularTotal(this)">`;
-      celdaTotal.innerHTML = `0.00`;
-      celdaAccion.innerHTML = `<button class="btn-delete" onclick="eliminarFila(this)">🗑️</button>`;
+      fila.insertCell(0).innerHTML = `<input type="number" value="1" min="1" onchange="calcularTotal(this)">`;
+      fila.insertCell(1).innerHTML = `<input type="text" placeholder="Descripción">`;
+      fila.insertCell(2).innerHTML = `<input type="number" value="0" step="0.01" onchange="calcularTotal(this)">`;
+      fila.insertCell(3).innerText = '0.00';
+      fila.insertCell(4).innerHTML = `<button class="btn-delete" onclick="eliminarFila(this)">🗑️</button>`;
     }
 
     function calcularTotal(elemento) {
       let fila = elemento.parentNode.parentNode;
       let cantidad = fila.cells[0].children[0].value;
       let precio = fila.cells[2].children[0].value;
-      let total = (cantidad * precio).toFixed(2);
-      fila.cells[3].innerText = total;
+      fila.cells[3].innerText = (cantidad * precio).toFixed(2);
     }
 
     function eliminarFila(boton) {
-      let fila = boton.parentNode.parentNode;
-      fila.remove();
+      boton.parentNode.parentNode.remove();
     }
 
-    async function generarPDF() {
+    function generarPDF() {
       const { jsPDF } = window.jspdf;
-      let doc = new jsPDF("p", "mm", "a4"); 
+      let doc = new jsPDF("p", "mm", "a4");
 
-      // Logo
-      if (logoBase64) {
-        doc.addImage(logoBase64, "PNG", 160, 10, 30, 25);
-      }
+      // Logo en PDF
+      if (logoBase64) doc.addImage(logoBase64, "PNG", 160, 10, 30, 25);
 
       // Encabezado
       doc.setFontSize(15);
-      doc.text("Servicios Técnicos & Soluciones en Redes", 105, 20, { align: "center" });
+      doc.text("MULTISERVICIOS SG", 105, 20, { align: "center" });
       doc.setFontSize(10);
-      doc.text("Redes | Software | Mantenimiento | Cámaras de Seguridad", 105, 28, { align: "center" });
-      doc.text("Cerco Eléctrico | Electricidad | Soporte Técnico", 105, 34, { align: "center" });
+      doc.text("Servicios de Construcción, Remodelaciones y Mantenimiento", 105, 28, { align: "center" });
+      doc.text("Adaptados a las necesidades de cada cliente con garantía y responsabilidad", 105, 34, { align: "center" });
       doc.line(20, 38, 190, 38);
 
-      // Datos Cliente y N° Cotización
+      // Datos cliente
       let cliente = document.getElementById("cliente").value;
       let fecha = document.getElementById("fecha").value;
       let numCotizacion = document.getElementById("numCotizacion").value;
@@ -153,7 +121,7 @@
       doc.setFontSize(12);
       doc.text(`Cliente: ${cliente}`, 20, 50);
       doc.text(`Fecha: ${fecha}`, 20, 58);
-      doc.text(`N° Cotización: ${numCotizacion}`, 140, 50); // A la derecha
+      doc.text(`N° Cotización: ${numCotizacion}`, 140, 50);
 
       // Productos
       let tabla = document.getElementById("tabla-productos");
@@ -170,7 +138,6 @@
         productos.push([cantidad, desc, precio, total]);
       }
 
-      // Añadir Subtotal y Total a la tabla
       productos.push([{ content: 'Sub-Total', colSpan: 3, styles: { halign: 'right' } }, sumaTotal.toFixed(2)]);
       productos.push([{ content: 'Total', colSpan: 3, styles: { halign: 'right' } }, sumaTotal.toFixed(2)]);
 
@@ -178,20 +145,14 @@
         head: [['Cantidad', 'Descripción', 'Precio Unitario (B/.)', 'Total (B/.)']],
         body: productos,
         startY: 70,
-        styles: { 
-          halign: 'center', 
-          valign: 'middle', 
-          lineWidth: 0.3,
-          lineColor: [0, 0, 0]
-        },
-        headStyles: { fillColor: [44, 62, 80], textColor: 255 },
+        styles: { halign: 'center', valign: 'middle', lineWidth: 0.3, lineColor: [0,0,0] },
+        headStyles: { fillColor: [44,62,80], textColor: 255 },
         theme: 'grid'
       });
 
-      // Pie
+      // Pie de página con datos de Efraín Guerra
       let pageHeight = doc.internal.pageSize.height;
       let pieY = pageHeight - 60;
-
       doc.setFontSize(11);
       doc.text("Método de Pago:", 20, pieY);
       pieY += 6;
@@ -207,8 +168,9 @@
       doc.text("Gracias por preferirnos. Valoramos su confianza en nuestros servicios.", 105, pieY, { align: "center" });
 
       pieY = pageHeight - 22;
-      doc.text("Tel: (507) 6504-4926 | Email: gerenciamultikc@hotmail.com / gerencianewtech@hotmail.com", 105, pieY, { align: "center" });
+      doc.text("Tel: (507) 6748-8227 | Email: efraineguerra@gmail.com", 105, pieY, { align: "center" });
 
+      // Descargar PDF
       if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
         let pdfBlobUrl = doc.output("bloburl");
         window.open(pdfBlobUrl, "_blank");
