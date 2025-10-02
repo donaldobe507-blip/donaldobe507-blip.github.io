@@ -17,9 +17,11 @@
       box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
     }
     label { display: block; margin-top: 10px; font-weight: bold; }
-    input { width: 100%; padding: 8px; margin-top: 5px;
-      border: 1px solid #ccc; border-radius: 8px; font-size: 14px; }
-
+    input, textarea {
+      width: 100%; padding: 8px; margin-top: 5px;
+      border: 1px solid #ccc; border-radius: 8px; font-size: 14px;
+    }
+    textarea { resize: vertical; }
     table {
       width: 100%;
       border-collapse: collapse;
@@ -30,10 +32,10 @@
       border: 1px solid #0b437a;
       padding: 10px;
       text-align: center;
+      vertical-align: middle;
     }
     th { background: #2c3e50; color: white; }
     td { background: #fafafa; }
-
     .btn { margin-top: 15px; padding: 10px 20px;
       border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: bold;
       transition: 0.3s; }
@@ -92,7 +94,7 @@
       let tabla = document.getElementById("tabla-productos");
       let fila = tabla.insertRow(-1);
       fila.insertCell(0).innerHTML = `<input type="number" value="1" min="1" onchange="calcularTotal(this)">`;
-      fila.insertCell(1).innerHTML = `<input type="text" placeholder="Descripción">`;
+      fila.insertCell(1).innerHTML = `<textarea placeholder="Descripción" rows="3" style="width:95%;"></textarea>`;
       fila.insertCell(2).innerHTML = `<input type="number" value="0" step="0.01" onchange="calcularTotal(this)">`;
       fila.insertCell(3).innerText = '0.00';
       fila.insertCell(4).innerHTML = `<button class="btn-delete" onclick="eliminarFila(this)">🗑️</button>`;
@@ -151,7 +153,12 @@
         startY: 70,
         styles: { halign: 'center', valign: 'middle', lineWidth: 0.3, lineColor: [0,0,0] },
         headStyles: { fillColor: [44,62,80], textColor: 255 },
-        theme: 'grid'
+        theme: 'grid',
+        didParseCell: function(data) {
+          if (data.column.index === 1) { // Columna Descripción
+            data.cell.styles.halign = 'left';
+          }
+        }
       });
 
       let pageHeight = doc.internal.pageSize.height;
@@ -197,5 +204,6 @@
   </script>
 </body>
 </html>
+
 
 
