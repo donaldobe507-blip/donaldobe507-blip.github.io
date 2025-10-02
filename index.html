@@ -23,16 +23,12 @@
     }
     textarea { resize: vertical; }
     table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 15px;
+      width: 100%; border-collapse: collapse; margin-top: 15px;
       border: 2px solid #0b437a;
     }
     th, td {
       border: 1px solid #0b437a;
-      padding: 10px;
-      text-align: center;
-      vertical-align: middle;
+      padding: 10px; text-align: center; vertical-align: middle;
     }
     th { background: #2c3e50; color: white; }
     td { background: #fafafa; }
@@ -50,7 +46,7 @@
   </style>
 </head>
 <body>
-  <h2>Generador de Cotización - Construcción</h2>
+  <h2>Generador de Cotización </h2>
   <div class="formulario">
     <label>Cliente: <input type="text" id="cliente"></label>
     <label>Fecha: <input type="date" id="fecha"></label>
@@ -115,13 +111,15 @@
       const { jsPDF } = window.jspdf;
       let doc = new jsPDF("p", "mm", "a4");
 
-      // Encabezado bonito
-      if (logoBase64) doc.addImage(logoBase64, "PNG", 160, 10, 30, 25);
+      // Encabezado con logo
       doc.setFillColor(41, 128, 185);
-      doc.rect(0, 0, 210, 40, "F"); // banda azul
+      doc.rect(0, 0, 210, 40, "F");
+      if (logoBase64) {
+        doc.addImage(logoBase64, "PNG", 160, 8, 35, 25);
+      }
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(18);
-      doc.text("COTIZACIÓN - MULTISERVICIOS SG", 105, 20, { align: "center" });
+      doc.text("MULTISERVICIOS SG", 105, 18, { align: "center" });
       doc.setFontSize(10);
       doc.text("Servicios de Construcción, Remodelaciones y Mantenimiento", 105, 28, { align: "center" });
       doc.setTextColor(0, 0, 0);
@@ -151,10 +149,20 @@
         productos.push([cantidad, desc, precio, total]);
       }
 
+      // Unir tabla productos + totales
+      productos.push([
+        { content: "Sub-Total", colSpan: 3, styles: { halign: "right" } },
+        sumaTotal.toFixed(2)
+      ]);
+      productos.push([
+        { content: "Total", colSpan: 3, styles: { halign: "right", fillColor: [41,128,185], textColor: 255, fontStyle: "bold" } },
+        sumaTotal.toFixed(2)
+      ]);
+
       doc.autoTable({
         head: [['Cantidad', 'Descripción', 'Precio Unitario (B/.)', 'Total (B/.)']],
         body: productos,
-        startY: 70,
+        startY: 75,
         styles: { lineWidth: 0.3, lineColor: [0,0,0] },
         headStyles: { fillColor: [44,62,80], textColor: 255 },
         columnStyles: {
@@ -163,29 +171,14 @@
           2: { halign: 'right', cellWidth: 40 },
           3: { halign: 'right', cellWidth: 35 }
         },
+        tableWidth: "90%", // <-- aquí el 90%
         theme: 'grid'
       });
 
-      // Totales alineados
-      doc.autoTable({
-        body: [
-          [{ content: 'Sub-Total', colSpan: 3, styles: { halign: 'right' } }, sumaTotal.toFixed(2)],
-          [{ content: 'Total', colSpan: 3, styles: { halign: 'right', fillColor: [41,128,185], textColor: 255, fontStyle: 'bold' } }, sumaTotal.toFixed(2)]
-        ],
-        startY: doc.lastAutoTable.finalY + 10,
-        theme: 'grid',
-        styles: { lineWidth: 0.3, lineColor: [0,0,0] },
-        columnStyles: {
-          0: { cellWidth: 25 },
-          1: { cellWidth: 90 },
-          2: { cellWidth: 40, halign: 'right' },
-          3: { cellWidth: 35, halign: 'right' }
-        },
-        tableWidth: 190
-      });
+      // Pie de página fijo
+      let pageHeight = doc.internal.pageSize.height;
+      let pieY = pageHeight - 50;
 
-      // Pie
-      let pieY = doc.lastAutoTable.finalY + 20;
       doc.setFontSize(11);
       doc.text("Método de Pago:", 20, pieY);
       pieY += 6;
@@ -196,13 +189,14 @@
       pieY += 5;
       doc.text("- Yappy: 6748-8227", 20, pieY);
 
-      pieY += 15;
+      pieY = pageHeight - 20;
       doc.setFontSize(10);
       doc.setTextColor(100);
       doc.text("Gracias por preferirnos. Valoramos su confianza en nuestros servicios.", 105, pieY, { align: "center" });
       pieY += 6;
       doc.text("Tel: (507) 6748-8227 | Email: efraineguerra@gmail.com", 105, pieY, { align: "center" });
 
+      // Descargar o abrir
       if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
         let pdfBlobUrl = doc.output("bloburl");
         window.open(pdfBlobUrl, "_blank");
@@ -213,6 +207,7 @@
   </script>
 </body>
 </html>
+
 
 
 
