@@ -2,172 +2,218 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Cotización - Multiservicio SG</title>
-  <!-- Librerías necesarias -->
+  <title>Generador de Cotización </title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      margin: 40px;
-      background: #f9f9f9;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #f3f6fa; margin: 0; padding: 20px; color: #333;
     }
-    h1 {
-      text-align: center;
-      color: #333;
+    h2 { text-align: center; color: #2c3e50; margin-bottom: 20px; }
+    .formulario {
+      max-width: 900px; margin: auto; background: #fff;
+      padding: 25px; border-radius: 12px;
+      box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
     }
+    label { display: block; margin-top: 10px; font-weight: bold; }
+    input, textarea {
+      width: 100%; padding: 8px; margin-top: 5px;
+      border: 1px solid #ccc; border-radius: 8px; font-size: 14px;
+    }
+    textarea { resize: vertical; }
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 20px;
+      margin-top: 15px;
+      border: 2px solid #0b437a;
     }
-    table, th, td {
-      border: 1px solid #ddd;
-    }
-    th {
-      background: #0077b6;
-      color: white;
+    th, td {
+      border: 1px solid #0b437a;
       padding: 10px;
+      text-align: center;
+      vertical-align: middle;
     }
-    td {
-      padding: 8px;
-      text-align: left;
-    }
-    td.num {
-      text-align: right;
-    }
-    .btn {
-      padding: 10px 15px;
-      background: #0077b6;
-      color: white;
-      border: none;
-      cursor: pointer;
-      margin: 10px 0;
-      border-radius: 5px;
-    }
-    .btn:hover {
-      background: #023e8a;
-    }
-    textarea {
-      width: 95%;
-      resize: vertical;
-      min-height: 50px;
-    }
-    #total {
-      text-align: right;
-      margin-top: 20px;
-      font-size: 18px;
-      font-weight: bold;
-    }
+    th { background: #2c3e50; color: white; }
+    td { background: #fafafa; }
+    .btn { margin-top: 15px; padding: 10px 20px;
+      border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: bold;
+      transition: 0.3s; }
+    .btn-add { background: #27ae60; color: white; }
+    .btn-add:hover { background: #219150; }
+    .btn-download { background: #2980b9; color: white; float: right; }
+    .btn-download:hover { background: #21618c; }
+    .btn-delete { background: #e74c3c; color: white; border: none;
+      border-radius: 6px; padding: 5px 8px; cursor: pointer; }
+    .btn-delete:hover { background: #c0392b; }
+    #logoPreview { margin: 10px auto; display: block; max-width: 150px; max-height: 80px; }
   </style>
 </head>
 <body>
-  <h1>Cotización - Multiservicio SG</h1>
-  <button class="btn" onclick="agregarFila()">➕ Agregar fila</button>
-  <table id="tabla-productos">
-    <thead>
+  <h2>Generador de Cotización - Construcción</h2>
+  <div class="formulario">
+    <label>Cliente: <input type="text" id="cliente"></label>
+    <label>Fecha: <input type="date" id="fecha"></label>
+    <label>N° de Cotización: <input type="text" id="numCotizacion"></label>
+    <label>Logo de la Empresa: <input type="file" id="logo" accept="image/*"></label>
+    <img id="logoPreview" alt="Vista previa del logo">
+
+    <h3>Productos / Servicios</h3>
+    <table id="tabla-productos">
       <tr>
         <th>Cantidad</th>
         <th>Descripción</th>
-        <th>Precio Unitario</th>
-        <th>Total</th>
+        <th>Precio Unitario (B/.)</th>
+        <th>Total (B/.)</th>
         <th>Acción</th>
       </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-  <div id="total">Total General: $0.00</div>
-  <button class="btn" onclick="generarPDF()">📄 Descargar PDF</button>
+    </table>
+    <button class="btn btn-add" onclick="agregarFila()">➕ Añadir Producto</button>
+    <button class="btn btn-download" onclick="generarPDF()">💾 Descargar PDF</button>
+    <div style="clear:both;"></div>
+  </div>
 
   <script>
+    let logoBase64 = null;
+
+    document.getElementById("logo").addEventListener("change", function() {
+      const file = this.files[0];
+      if(file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          logoBase64 = e.target.result;
+          const preview = document.getElementById("logoPreview");
+          preview.src = logoBase64;
+          preview.style.display = "block";
+        }
+        reader.readAsDataURL(file);
+      }
+    });
+
     function agregarFila() {
-      let tabla = document.getElementById("tabla-productos").getElementsByTagName("tbody")[0];
+      let tabla = document.getElementById("tabla-productos");
       let fila = tabla.insertRow(-1);
       fila.insertCell(0).innerHTML = `<input type="number" value="1" min="1" onchange="calcularTotal(this)">`;
-      fila.insertCell(1).innerHTML = `<textarea placeholder="Descripción"></textarea>`;
+      fila.insertCell(1).innerHTML = `<textarea placeholder="Descripción" rows="3" style="width:95%;"></textarea>`;
       fila.insertCell(2).innerHTML = `<input type="number" value="0" step="0.01" onchange="calcularTotal(this)">`;
-      fila.insertCell(3).innerHTML = `<span class="num">0.00</span>`;
-      fila.insertCell(4).innerHTML = `<button class="btn" style="background:#d62828;" onclick="eliminarFila(this)">🗑️</button>`;
+      fila.insertCell(3).innerText = '0.00';
+      fila.insertCell(4).innerHTML = `<button class="btn-delete" onclick="eliminarFila(this)">🗑️</button>`;
     }
 
     function calcularTotal(elemento) {
-      let fila = elemento.closest("tr");
-      let cantidad = parseFloat(fila.cells[0].children[0].value) || 0;
-      let precio = parseFloat(fila.cells[2].children[0].value) || 0;
-      let total = cantidad * precio;
-      fila.cells[3].children[0].innerText = total.toFixed(2);
-      calcularGranTotal();
-    }
-
-    function calcularGranTotal() {
-      let tabla = document.getElementById("tabla-productos");
-      let filas = tabla.getElementsByTagName("tbody")[0].rows;
-      let granTotal = 0;
-      for (let i = 0; i < filas.length; i++) {
-        granTotal += parseFloat(filas[i].cells[3].children[0].innerText) || 0;
-      }
-      document.getElementById("total").innerText = "Total General: $" + granTotal.toFixed(2);
+      let fila = elemento.parentNode.parentNode;
+      let cantidad = fila.cells[0].children[0].value;
+      let precio = fila.cells[2].children[0].value;
+      fila.cells[3].innerText = (cantidad * precio).toFixed(2);
     }
 
     function eliminarFila(boton) {
-      let fila = boton.closest("tr");
-      fila.remove();
-      calcularGranTotal();
+      boton.parentNode.parentNode.remove();
     }
 
-    async function generarPDF() {
+    function generarPDF() {
       const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
+      let doc = new jsPDF("p", "mm", "a4");
 
-      // Logo (puedes reemplazar por tu logo en base64)
-      // doc.addImage("logo.png", "PNG", 10, 10, 40, 20);
-
+      // Encabezado bonito
+      if (logoBase64) doc.addImage(logoBase64, "PNG", 160, 10, 30, 25);
+      doc.setFillColor(41, 128, 185);
+      doc.rect(0, 0, 210, 40, "F"); // banda azul
+      doc.setTextColor(255, 255, 255);
       doc.setFontSize(18);
-      doc.setTextColor(40);
-      doc.text("Cotización - Multiservicio SG", 105, 20, { align: "center" });
+      doc.text("COTIZACIÓN - MULTISERVICIOS SG", 105, 20, { align: "center" });
+      doc.setFontSize(10);
+      doc.text("Servicios de Construcción, Remodelaciones y Mantenimiento", 105, 28, { align: "center" });
+      doc.setTextColor(0, 0, 0);
 
+      // Datos cliente
+      let cliente = document.getElementById("cliente").value;
+      let fecha = document.getElementById("fecha").value;
+      let numCotizacion = document.getElementById("numCotizacion").value;
+
+      doc.setFontSize(12);
+      doc.text(`Cliente: ${cliente}`, 20, 50);
+      doc.text(`Fecha: ${fecha}`, 20, 58);
+      doc.text(`N° Cotización: ${numCotizacion}`, 140, 50);
+
+      // Tabla productos
       let tabla = document.getElementById("tabla-productos");
-      let filas = tabla.getElementsByTagName("tbody")[0].rows;
+      let filas = tabla.rows;
+      let productos = [];
+      let sumaTotal = 0;
 
-      let datos = [];
-      for (let i = 0; i < filas.length; i++) {
+      for (let i = 1; i < filas.length; i++) {
         let cantidad = filas[i].cells[0].children[0].value;
         let desc = filas[i].cells[1].children[0].value;
         let precio = filas[i].cells[2].children[0].value;
-        let total = filas[i].cells[3].children[0].innerText;
-        datos.push([cantidad, desc, "$" + parseFloat(precio).toFixed(2), "$" + total]);
+        let total = (cantidad * precio).toFixed(2);
+        sumaTotal += parseFloat(total);
+        productos.push([cantidad, desc, precio, total]);
       }
 
       doc.autoTable({
-        head: [['Cantidad', 'Descripción', 'Precio Unitario', 'Total']],
-        body: datos,
-        startY: 30,
-        theme: 'grid',
-        styles: { fontSize: 10, cellPadding: 4 },
-        headStyles: { fillColor: [0, 119, 182], textColor: 255, halign: 'center' },
-        bodyStyles: { valign: 'top' },
-        alternateRowStyles: { fillColor: [240, 240, 240] },
+        head: [['Cantidad', 'Descripción', 'Precio Unitario (B/.)', 'Total (B/.)']],
+        body: productos,
+        startY: 70,
+        styles: { lineWidth: 0.3, lineColor: [0,0,0] },
+        headStyles: { fillColor: [44,62,80], textColor: 255 },
         columnStyles: {
-          0: { halign: 'right', cellWidth: 20 },
+          0: { halign: 'center', cellWidth: 25 },
           1: { halign: 'left', cellWidth: 90 },
-          2: { halign: 'right', cellWidth: 30 },
-          3: { halign: 'right', cellWidth: 30 }
-        }
+          2: { halign: 'right', cellWidth: 40 },
+          3: { halign: 'right', cellWidth: 35 }
+        },
+        theme: 'grid'
       });
 
-      let finalY = doc.lastAutoTable.finalY + 10;
-      doc.setFontSize(12);
-      doc.setTextColor(0, 0, 0);
-      doc.text("Total General:", 140, finalY);
-      doc.setFontSize(14);
-      doc.setTextColor(200, 0, 0);
-      doc.text(document.getElementById("total").innerText.split(": ")[1], 180, finalY, { align: "right" });
+      // Totales alineados
+      doc.autoTable({
+        body: [
+          [{ content: 'Sub-Total', colSpan: 3, styles: { halign: 'right' } }, sumaTotal.toFixed(2)],
+          [{ content: 'Total', colSpan: 3, styles: { halign: 'right', fillColor: [41,128,185], textColor: 255, fontStyle: 'bold' } }, sumaTotal.toFixed(2)]
+        ],
+        startY: doc.lastAutoTable.finalY + 10,
+        theme: 'grid',
+        styles: { lineWidth: 0.3, lineColor: [0,0,0] },
+        columnStyles: {
+          0: { cellWidth: 25 },
+          1: { cellWidth: 90 },
+          2: { cellWidth: 40, halign: 'right' },
+          3: { cellWidth: 35, halign: 'right' }
+        },
+        tableWidth: 190
+      });
 
-      doc.save("cotizacion.pdf");
+      // Pie
+      let pieY = doc.lastAutoTable.finalY + 20;
+      doc.setFontSize(11);
+      doc.text("Método de Pago:", 20, pieY);
+      pieY += 6;
+      doc.setFontSize(10);
+      doc.text("- Banco General (Ahorro)", 20, pieY);
+      pieY += 5;
+      doc.text("- Banistmo (Ahorro)", 20, pieY);
+      pieY += 5;
+      doc.text("- Yappy: 6748-8227", 20, pieY);
+
+      pieY += 15;
+      doc.setFontSize(10);
+      doc.setTextColor(100);
+      doc.text("Gracias por preferirnos. Valoramos su confianza en nuestros servicios.", 105, pieY, { align: "center" });
+      pieY += 6;
+      doc.text("Tel: (507) 6748-8227 | Email: efraineguerra@gmail.com", 105, pieY, { align: "center" });
+
+      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        let pdfBlobUrl = doc.output("bloburl");
+        window.open(pdfBlobUrl, "_blank");
+      } else {
+        doc.save("cotizacion.pdf");
+      }
     }
   </script>
 </body>
 </html>
+
 
 
 
